@@ -6,6 +6,7 @@ export interface User {
   image?: string;
   createdAt: Date;
   updatedAt: Date;
+  role?: string; // 'admin' or 'user'
 }
 
 // Poll types
@@ -30,6 +31,8 @@ export interface Poll {
 export interface PollSettings {
   allowMultipleVotes: boolean;
   requireAuthentication: boolean;
+  isPublic: boolean; // true for public polls, false for private
+  shareToken?: string; // optional token for private sharing
 }
 
 // Vote types

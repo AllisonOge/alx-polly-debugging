@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/app/lib/context/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,13 +22,16 @@ interface Poll {
 }
 
 export default function AdminPage() {
+  const { user, loading: authLoading } = useAuth();
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchAllPolls();
-  }, []);
+    if (user && user.role === "admin") {
+      fetchAllPolls();
+    }
+  }, [user]);
 
   const fetchAllPolls = async () => {
     const supabase = createClient();
@@ -54,8 +58,16 @@ export default function AdminPage() {
     setDeleteLoading(null);
   };
 
-  if (loading) {
-    return <div className="p-6">Loading all polls...</div>;
+  if (authLoading || loading) {
+    return <div className="p-6">Loading...</div>;
+  }
+
+  if (!user) {
+    return <div className="p-6 text-red-600">Access denied. Please log in.</div>;
+  }
+
+  if (user.role !== "admin") {
+    return <div className="p-6 text-red-600">Access denied. Admins only.</div>;
   }
 
   return (

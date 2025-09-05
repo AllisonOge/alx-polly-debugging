@@ -12,24 +12,30 @@ import {
 } from "@/components/ui/card";
 import { Copy, Share2, Twitter, Facebook, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { Poll } from "@/app/lib/types/index";
 
 interface VulnerableShareProps {
-  pollId: string;
-  pollTitle: string;
+  poll: Poll;
 }
 
-export default function VulnerableShare({
-  pollId,
-  pollTitle,
-}: VulnerableShareProps) {
+
+export default function VulnerableShare({ poll }: VulnerableShareProps) {
   const [shareUrl, setShareUrl] = useState("");
+  const { id: pollId, title: pollTitle, settings } = poll;
 
   useEffect(() => {
-    // Generate the share URL
     const baseUrl = window.location.origin;
-    const pollUrl = `${baseUrl}/polls/${pollId}`;
-    setShareUrl(pollUrl);
-  }, [pollId]);
+    if (settings.isPublic) {
+      // Public poll: simple URL
+      setShareUrl(`${baseUrl}/polls/${pollId}`);
+    } else if (settings.shareToken) {
+      // Private poll: tokenized URL
+      setShareUrl(`${baseUrl}/polls/${pollId}?token=${settings.shareToken}`);
+    } else {
+      // Private poll with no token: no shareable link
+      setShareUrl("");
+    }
+  }, [pollId, settings]);
 
   const copyToClipboard = async () => {
     try {
@@ -87,9 +93,10 @@ export default function VulnerableShare({
               value={shareUrl}
               readOnly
               className="font-mono text-sm"
-              placeholder="Generating link..."
+              placeholder={settings.isPublic ? "Generating link..." : "No shareable link for private poll"}
+              disabled={!shareUrl}
             />
-            <Button onClick={copyToClipboard} variant="outline" size="sm">
+            <Button onClick={copyToClipboard} variant="outline" size="sm" disabled={!shareUrl}>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
@@ -106,6 +113,7 @@ export default function VulnerableShare({
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
+              disabled={!shareUrl}
             >
               <Twitter className="h-4 w-4" />
               Twitter
@@ -115,6 +123,7 @@ export default function VulnerableShare({
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
+              disabled={!shareUrl}
             >
               <Facebook className="h-4 w-4" />
               Facebook
@@ -124,6 +133,7 @@ export default function VulnerableShare({
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
+              disabled={!shareUrl}
             >
               <Mail className="h-4 w-4" />
               Email

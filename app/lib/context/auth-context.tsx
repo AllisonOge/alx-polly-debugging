@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const supabase = useMemo(() => createClient(), []);
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,14 +28,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const getUser = async () => {
       const { data, error } = await supabase.auth.getUser();
       if (error) {
-        console.error('Error fetching user:', error);
+        // Log only generic error, avoid leaking details
+        console.error('Error fetching user');
       }
-      if (mounted) {
-        setUser(data.user ?? null);
-        setSession(null);
-        setLoading(false);
-        console.log('AuthContext: Initial user loaded', data.user);
-      }
+      let userObj = data.user ?? null;
+      setUser(userObj);
+      // Try to get role from user metadata
+      let role = userObj?.user_metadata?.role || userObj?.role;
+      setRole(role);
+      // Fetch session separately for accuracy
+      const sessionRes = await supabase.auth.getSession();
+      setSession(sessionRes.data.session ?? null);
+      setLoading(false);
     };
 
     getUser();
@@ -42,8 +47,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      // Try to get role from user metadata
+      let role = session?.user?.user_metadata?.role || session?.user?.role;
+      setRole(role);
       // Do not set loading to false here, only after initial load
-      console.log('AuthContext: Auth state changed', _event, session, session?.user);
+      // Avoid logging sensitive session/user info
+      console.log('AuthContext: Auth state changed', _event);
     });
 
     return () => {
@@ -56,9 +65,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
   };
 
-  console.log('AuthContext: user', user);
+  // Avoid logging sensitive user info
   return (
-    <AuthContext.Provider value={{ session, user, signOut, loading }}>
+    <AuthContext.Provider value={{ session, user: user ? { ...user, role } : null, signOut, loading }}>
       {children}
     </AuthContext.Provider>
   );
