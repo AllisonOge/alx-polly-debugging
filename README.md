@@ -79,11 +79,32 @@ cd alx-polly
 npm install
 ```
 
-### 3. Environment Variables
+### 3. Database Setup
 
-The project uses Supabase for its backend. An environment file `.env.local` is needed.Use the keys you created during the Supabase setup process.
+The project uses Supabase for its backend. You need to set up the database schema before running the application:
 
-### 4. Running the Development Server
+```bash
+npm run db:setup
+```
+
+This script will guide you through linking your Supabase project and applying the necessary migrations. After setup, you can verify that everything is working correctly:
+
+```bash
+npm run db:check
+```
+
+### 4. Environment Variables
+
+Create an environment file `.env.local` with your Supabase credentials:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+You can find these values in your Supabase project dashboard under Project Settings > API.
+
+### 5. Running the Development Server
 
 Start the application in development mode:
 
